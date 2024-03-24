@@ -608,8 +608,9 @@ if __name__ == '__main__':
             device_map,
             script_args
         )
-        model_ref = copy.deepcopy(model)
-    
+
+        model_ref = copy.deepcopy(model) if peft_config else None
+
         run_dpo_finetuning(
             model = model,
             model_ref = model_ref,
@@ -619,7 +620,6 @@ if __name__ == '__main__':
             peft_config = peft_config,
             script_args = script_args
         )
-    
         
         del model
         del model_ref
