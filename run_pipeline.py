@@ -662,7 +662,6 @@ if __name__ == '__main__':
    
 
     # Store final result
-    # Specify the filename
     all_result_path = os.path.join(script_args.output_dir, "all_result.json")
 
     # Writing to JSON file
