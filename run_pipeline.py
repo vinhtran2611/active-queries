@@ -625,7 +625,7 @@ if __name__ == '__main__':
         print("="*10, " EVALUATING GENERATOR ", "="*10)
         eval_json_file = os.path.join(script_args.output_dir, 'eval_results_'+str(iter)+'.json')
         os.system(
-            "cd lm-evaluation-harness && "
+            "cd ../lm-evaluation-harness && "
             "python main.py "
             # "--model gpt2 " # JUST FOR GPT2
             "--model hf-causal-experimental "
