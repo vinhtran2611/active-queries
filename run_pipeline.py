@@ -624,17 +624,34 @@ if __name__ == '__main__':
         ################################################################
         print("="*10, " EVALUATING GENERATOR ", "="*10)
         eval_json_file = os.path.join(script_args.output_dir, 'eval_results_'+str(iter)+'.json')
-        os.system(
-            "cd ../lm-evaluation-harness && "
-            "python main.py "
-            # "--model gpt2 " # JUST FOR GPT2
-            "--model hf-causal-experimental "
-            f"--model_args pretrained={os.path.join(script_args.output_dir, 'generator_model')} "
-            f"--output_path {eval_json_file} "
-            # f"--write_out --output_base_path {os.path.join(script_args.output_dir, 'eval_results')} "
-            "--tasks hellaswag "
-            "--limit 100" if script_args.sanity_check else ""
-        )
+        # os.system(
+        #     "cd ../lm-evaluation-harness && "
+        #     "python main.py "
+        #     # "--model gpt2 " # JUST FOR GPT2
+        #     "--model hf-causal-experimental "
+        #     f"--model_args pretrained={os.path.join(script_args.output_dir, 'generator_model')} "
+        #     f"--output_path {eval_json_file} "
+        #     # f"--write_out --output_base_path {os.path.join(script_args.output_dir, 'eval_results')} "
+        #     "--tasks hellaswag "
+        #     "--limit 100" if script_args.sanity_check else ""
+        # )
+
+        # Define the CLI command as a string
+        cli_command = f'lm_eval --model hf \
+                        --model_args pretrained={os.path.join(script_args.output_dir, "generator_model")} \
+                        --tasks hellaswag \
+                        --device cuda:0 \
+                        --batch_size 8 \
+                        --output_path {eval_json_file} \
+                        {"--limit 100" if script_args.sanity_check else ""}'
+        
+        exit_code = os.system(cli_command)
+        # Check the exit code for success or failure
+        if exit_code == 0:
+            print("Command executed successfully")
+        else:
+            print("Command failed with exit code:", exit_code)
+
         with open(eval_json_file) as json_file:
             eval_results = json.load(json_file)
             
