@@ -41,7 +41,8 @@ class ScriptArguments:
         default="meta-llama/Llama-2-7b-chat-hf",
         metadata={"help": "the location of the SFT model name or path"},
     )
-    dataset_name: Optional[str] = field(default="Anthropic/hh-rlhf", metadata={"help": "the dataset name"})
+    dataset_name: Optional[str] = field(default="Anthropic/hh-rlhf", metadata={"help": "the dataset name for training"})
+    eval_datasets: Optional[str] = field(default="hellaswag", metadata={"help": "the dataset name for eval"})
     dataset_text_field: Optional[str] = field(default="text", metadata={"help": "the text field of the dataset"})
     
     learning_rate: Optional[float] = field(default=5e-4, metadata={"help": "optimizer learning rate"})
@@ -514,8 +515,14 @@ if __name__ == '__main__':
     # SAVING TOKENIZER
     tokenizer.save_pretrained(os.path.join(script_args.output_dir, "generator_model"))
 
-    eval_accs = []
-    eval_stderrs = []
+    # Define the directory path
+    eval_dir = os.path.join(script_args.output_dir, script_args.eval_datasets)
+
+    # Check if the directory exists
+    if not os.path.exists(eval_dir):
+        # Create the directory if it doesn't exist
+        os.makedirs(eval_dir)
+
     eval_metrics = []
 
     for iter in range(script_args.bo_iters):
@@ -613,16 +620,6 @@ if __name__ == '__main__':
             script_args = script_args
         )
     
-        # if script_args.use_peft:
-        #     model = AutoPeftModelForCausalLM.from_pretrained(
-        #         os.path.join(script_args.output_dir, "generator_model"),
-        #         local_files_only=True, 
-        #         load_in_4bit=True if script_args.load_in_4bit else False, 
-        #         device_map=device_map, 
-        #         # torch_dtype=torch.bfloat16
-        #     )
-        #     model.merge_and_unload()
-        #     model.save_pretrained(os.path.join(script_args.output_dir, "generator_model"))
         
         del model
         del model_ref
@@ -631,13 +628,14 @@ if __name__ == '__main__':
         # EVALUATING LLM (GENERATOR)
         ################################################################
         print("="*10, " EVALUATING GENERATOR ", "="*10)
-        eval_json_file = os.path.join(script_args.output_dir, 'eval_results_'+str(iter)+'.json')
 
+        # Construct the full path including the file name
+        eval_json_file = os.path.join(eval_dir, f'eval_results_{iter}.json')
 
         # Define the CLI command as a string
         cli_command = f'lm_eval --model hf\
                         --model_args pretrained={script_args.model_name_or_path},peft={os.path.join(script_args.output_dir, "generator_model")},trust_remote_code=True,load_in_4bit=True\
-                        --tasks hellaswag \
+                        --tasks {script_args.eval_datasets} \
                         --device cuda:0 \
                         --batch_size 8 \
                         --output_path {eval_json_file} \
@@ -652,11 +650,10 @@ if __name__ == '__main__':
 
         with open(eval_json_file) as json_file:
             eval_results = json.load(json_file)
-            
 
         eval_metrics.append({
             "iteration": iter,
-            "metric": eval_results['results']['hellaswag']
+            "metric": eval_results['results'][script_args.eval_datasets]
         })
         
    
@@ -664,8 +661,14 @@ if __name__ == '__main__':
     # Store final result
     all_result_path = os.path.join(script_args.output_dir, "all_result.json")
 
-    # Writing to JSON file
-    with open(all_result_path, 'w') as json_file:
-        json.dump(eval_metrics, json_file, indent=4)  
+        try:
+            with open(all_result_path, 'w') as json_file:
+                json.dump(eval_metrics, json_file, indent=4)
+            # Print message if successful
+            print(f"Result has been stored at: {all_result_path}")
+        except Exception as e:
+            # Print error message if writing fails
+            print(f"Error occurred while writing result: {e}")
+
 # python run_pipeline.py --sanity_check True --init_samples 10 --bo_iters 10 --topk_acqf 10 --output_dir /lfs/local/0/sttruong/lhf
     
