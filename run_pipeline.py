@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from datasets import Dataset, load_dataset
-from peft import AutoPeftModelForCausalLM, LoraConfig, get_peft_model
+from peft import AutoPeftModelForCausalLM, LoraConfig, get_peft_model, PeftConfig, PeftModel
+
 from transformers import (
     AutoTokenizer, 
     HfArgumentParser, 
@@ -226,6 +227,41 @@ def get_rw_model(
                 param.requires_grad = False
             
     return rw_model
+
+
+def get_rw_model_with_adapter(
+    base_model_name_or_path,
+    peft_adapter_path,
+    quantization_config,
+    device_map,
+    script_args
+): 
+    rw_model = AutoModelForSequenceClassification.from_pretrained(
+        base_model_name_or_path,
+        low_cpu_mem_usage=True,
+        quantization_config=quantization_config,
+        device_map=device_map,
+        trust_remote_code=script_args.trust_remote_code,
+        num_labels=script_args.num_rewards
+    )
+
+    rw_model.config.use_cache = False
+    rw_model.config.pretraining_tp = 2
+    rw_model.config.pad_token_id = rw_model.config.eos_token_id
+
+    merge_rw_model = PeftModel.from_pretrained(rw_model, peft_adapter_path)
+
+    # JUST FOR GPT2
+    # rw_model.config.pad_token_id = model.config.eos_token_id
+
+    if script_args.rm_freeze_env:
+        for name, param in merge_rw_model.named_parameters():
+            if 'score' in name:  #  'score' is the name of the last layer
+                param.requires_grad = True
+            else:
+                param.requires_grad = False
+            
+    return merge_rw_model
 
 ######################################################
 #################### TOKENIZER #######################
@@ -546,14 +582,14 @@ if __name__ == '__main__':
             ################################################################
             print("="*10, " TRAINING REWARD MODEL ", "="*10)
             train_dataset_rw, eval_dataset_rw = get_dataset_for_reward(
-                train_dataset=train_dataset,
+                train_dataset=train_dataset, # ACTIVE QUERIES
                 eval_dataset=eval_dataset,
                 max_seq_length=script_args.max_seq_length,
                 sanity_check=script_args.sanity_check
             )
         
             rw_model = get_rw_model(
-                os.path.join(script_args.output_dir, "generator_model"),
+                os.path.join(script_args.output_dir, "generator_model"), # Load new adapter model
                 quantization_config,
                 device_map,
                 script_args
@@ -600,7 +636,7 @@ if __name__ == '__main__':
             raise NotImplementedError
             
         # Update train_dataset
-        train_dataset = Dataset.from_dict(selected_samples)
+        train_dataset = Dataset.from_dict(selected_samples) # ACTIVE QUERIES
         unobserved_dataset = unobserved_dataset.select(
             (
                 i for i in range(len(unobserved_dataset)) 
@@ -613,7 +649,7 @@ if __name__ == '__main__':
         ################################################################
         print("="*10, " FINETUNING GENERATOR ", "="*10)
         train_dataset_lm, eval_dataset_lm = get_dataset_for_finetuning(
-            train_dataset=train_dataset,
+            train_dataset=train_dataset, # ACTIVE QUERIES
             eval_dataset=eval_dataset,
             max_seq_length=script_args.max_seq_length,
             sanity_check=script_args.sanity_check
