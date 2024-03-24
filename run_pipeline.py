@@ -645,7 +645,7 @@ if __name__ == '__main__':
 
         # Define the CLI command as a string
         cli_command = f'lm_eval --model hf-auto\
-                        --model_args pretrained={script_args.model_name_or_path},peft={os.path.join(script_args.output_dir, "generator_model")},trust_remote_code=True\
+                        --model_args pretrained={script_args.model_name_or_path},peft={os.path.join(script_args.output_dir, "generator_model")},trust_remote_code=True,load_in_4bit=True\
                         --tasks hellaswag \
                         --device cuda:0 \
                         --batch_size 8 \
