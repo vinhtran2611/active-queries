@@ -443,7 +443,7 @@ def run_dpo_finetuning(
     )
     
     dpo_trainer.train()
-    dpo_trainer.model.save_pretrained(output_dir)
+    dpo_trainer.model.save_pretrained(output_dir, safe_serialization=False)
 
 if __name__ == '__main__':
     # LOAD DATASETS
@@ -625,7 +625,7 @@ if __name__ == '__main__':
         print("="*10, " EVALUATING GENERATOR ", "="*10)
         eval_json_file = os.path.join(script_args.output_dir, 'eval_results_'+str(iter)+'.json')
         # os.system(
-        #     "cd ../lm-evaluation-harness && "
+        #     "cd lm-evaluation-harness && "
         #     "python main.py "
         #     # "--model gpt2 " # JUST FOR GPT2
         #     "--model hf-causal-experimental "
@@ -638,7 +638,7 @@ if __name__ == '__main__':
 
         # Define the CLI command as a string
         cli_command = f'lm_eval --model hf-auto\
-                        --model_args pretrained={script_args.model_name_or_path},{"load_in_4bit=True" if script_args.load_in_4bit else ""},peft={os.path.join(script_args.output_dir, "generator_model")},trust_remote_code=True\
+                        --model_args pretrained={script_args.model_name_or_path},peft={os.path.join(script_args.output_dir, "generator_model")},trust_remote_code=True\
                         --tasks hellaswag \
                         --device cuda:0 \
                         --batch_size 8 \
