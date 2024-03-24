@@ -431,7 +431,8 @@ def run_dpo_finetuning(
         model_ref = None
     
     # model = get_peft_model(model, peft_config)
-
+    # model.config.use_cache = False
+        
     dpo_trainer = DPOTrainer(
         model,
         model_ref, # None if peft_config
@@ -614,7 +615,10 @@ if __name__ == '__main__':
         if script_args.use_peft:
             model = AutoPeftModelForCausalLM.from_pretrained(
                 os.path.join(script_args.output_dir, "generator_model"),
-                device_map=device_map, torch_dtype=torch.bfloat16
+                local_files_only=True, 
+                load_in_4bit=True if script_args.load_in_4bit else False, 
+                device_map=device_map, 
+                # torch_dtype=torch.bfloat16
             )
             model.merge_and_unload()
             model.save_pretrained(os.path.join(script_args.output_dir, "generator_model"))
