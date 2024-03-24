@@ -519,9 +519,9 @@ if __name__ == '__main__':
     eval_dir = os.path.join(script_args.output_dir, script_args.eval_datasets)
 
     # Check if the directory exists
-        if not os.path.exists(eval_dir):
-            # Create the directory if it doesn't exist
-            os.makedirs(eval_dir)
+    if not os.path.exists(eval_dir):
+        # Create the directory if it doesn't exist
+        os.makedirs(eval_dir)
 
     eval_metrics = []
 
