@@ -209,6 +209,8 @@ def get_rw_model(
     )
     rw_model.config.use_cache = False
     rw_model.config.pretraining_tp = 2
+    rw_model.config.pad_token_id = rw_model.config.eos_token_id
+
 
     # JUST FOR GPT2
     # rw_model.config.pad_token_id = model.config.eos_token_id
