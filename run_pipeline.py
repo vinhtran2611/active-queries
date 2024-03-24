@@ -430,7 +430,7 @@ def run_dpo_finetuning(
         # Please pass `ref_model=None` in case you want to train PEFT adapters, or pass a ref_model with `force_use_ref_model=True` in DPOTrainer's init. if you want to use a different ref_model.
         model_ref = None
     
-    model = get_peft_model(model, peft_config)
+    # model = get_peft_model(model, peft_config)
 
     dpo_trainer = DPOTrainer(
         model,
