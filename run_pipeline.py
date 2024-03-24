@@ -516,7 +516,8 @@ if __name__ == '__main__':
 
     eval_accs = []
     eval_stderrs = []
-    
+    eval_metrics = []
+
     for iter in range(script_args.bo_iters):
         if script_args.algo == "max_rw":
             ################################################################
@@ -631,20 +632,10 @@ if __name__ == '__main__':
         ################################################################
         print("="*10, " EVALUATING GENERATOR ", "="*10)
         eval_json_file = os.path.join(script_args.output_dir, 'eval_results_'+str(iter)+'.json')
-        # os.system(
-        #     "cd lm-evaluation-harness && "
-        #     "python main.py "
-        #     # "--model gpt2 " # JUST FOR GPT2
-        #     "--model hf-causal-experimental "
-        #     f"--model_args pretrained={os.path.join(script_args.output_dir, 'generator_model')} "
-        #     f"--output_path {eval_json_file} "
-        #     # f"--write_out --output_base_path {os.path.join(script_args.output_dir, 'eval_results')} "
-        #     "--tasks hellaswag "
-        #     "--limit 100" if script_args.sanity_check else ""
-        # )
+
 
         # Define the CLI command as a string
-        cli_command = f'lm_eval --model hf-auto\
+        cli_command = f'lm_eval --model hf\
                         --model_args pretrained={script_args.model_name_or_path},peft={os.path.join(script_args.output_dir, "generator_model")},trust_remote_code=True,load_in_4bit=True\
                         --tasks hellaswag \
                         --device cuda:0 \
@@ -662,24 +653,20 @@ if __name__ == '__main__':
         with open(eval_json_file) as json_file:
             eval_results = json.load(json_file)
             
-        acc = eval_results["results"]["hellaswag"]["acc"]
-        stderr = eval_results["results"]["hellaswag"]["acc_stderr"]
-    
-        eval_accs.append(acc)
-        eval_stderrs.append(stderr)
+
+        eval_metrics.append({
+            "iteration": iter,
+            "metric": eval_results['results']['hellaswag']
+        })
         
-        x_axis = np.arange(len(eval_accs))
-        mean = np.array(eval_accs)
-        std = np.array(eval_stderrs)
-        fig = plt.figure()
-        plt.plot(x_axis, mean, label="Maximal reward")
-        plt.fill_between(x_axis, mean - std, mean + std, alpha=0.3)
-            
-        plt.xlabel("Iterations")
-        plt.ylabel("Evaluation accuracy")
-        
-        plt.savefig("accuracy_by_iteration.pdf")
-        plt.close()
-                       
+   
+
+    # Store final result
+    # Specify the filename
+    all_result_path = os.path.join(script_args.output_dir, "all_result.json")
+
+    # Writing to JSON file
+    with open(all_result_path, 'w') as json_file:
+        json.dump(eval_metrics, json_file, indent=4)  
 # python run_pipeline.py --sanity_check True --init_samples 10 --bo_iters 10 --topk_acqf 10 --output_dir /lfs/local/0/sttruong/lhf
     
