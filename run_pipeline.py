@@ -420,6 +420,12 @@ def run_dpo_finetuning(
         report_to=script_args.report_to
     )
     
+    if peft_config:
+        # ValueError: You passed both a ref_model and a peft_config. 
+        # For training PEFT adapters with DPO there is no need to pass a reference model. 
+        # Please pass `ref_model=None` in case you want to train PEFT adapters, or pass a ref_model with `force_use_ref_model=True` in DPOTrainer's init. if you want to use a different ref_model.
+        model_ref = None
+    
     dpo_trainer = DPOTrainer(
         model,
         model_ref,
