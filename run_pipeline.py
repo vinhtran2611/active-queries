@@ -180,7 +180,8 @@ def get_generator(
     )
     model.config.use_cache = False
     model.config.pretraining_tp = 1
-    
+    model.config.pad_token_id = model.config.eos_token_id
+
     if script_args.ignore_bias_buffers:
         # torch distributed hack
         model._ddp_params_and_buffers_to_ignore = [
