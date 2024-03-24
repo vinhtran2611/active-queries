@@ -489,7 +489,7 @@ if __name__ == '__main__':
         device_map,
         script_args
     )
-    model_ref = copy.deepcopy(model)
+    model_ref = copy.deepcopy(model) if peft_config else None
 
     run_dpo_finetuning(
         model = model,
@@ -501,14 +501,6 @@ if __name__ == '__main__':
         script_args = script_args
     )
 
-    # if script_args.use_peft:
-    #     model = AutoPeftModelForCausalLM.from_pretrained(
-    #         os.path.join(script_args.output_dir, "generator_model"),
-    #         device_map=device_map, torch_dtype=torch.bfloat16
-    #     )
-    #     model = model.merge_and_unload()
-    #     model.save_pretrained(os.path.join(script_args.output_dir, "generator_model"))
-    
     del model
     del model_ref
         
@@ -526,7 +518,29 @@ if __name__ == '__main__':
     eval_metrics = []
 
     for iter in range(script_args.bo_iters):
-        if script_args.algo == "max_rw":
+
+        ################################################################
+        # PREPARE REWARD MODELS
+        ################################################################
+        if iter == 0:
+            rw_model_path = os.path.join(script_args.output_dir, "generator_model")
+            if not os.path.exists(rw_model_path):
+                rw_model_path = script_args.model_name_or_path
+
+            rw_model = get_rw_model(
+                rw_model_path,
+                quantization_config,
+                device_map,
+                script_args
+            )
+
+            train_dataset_rw, eval_dataset_rw = get_dataset_for_reward(
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                max_seq_length=script_args.max_seq_length,
+                sanity_check=script_args.sanity_check
+            )
+        else:
             ################################################################
             # TRAINING REWARD MODELS
             ################################################################
@@ -554,9 +568,12 @@ if __name__ == '__main__':
                 script_args = script_args
             )
     
+        if script_args.algo == "max_rw":
             ################################################################
-            # SELECTING SAMPLES
+            # INFERENCE AND SELECTING SAMPLES BY USING REWARD MODEL
             ################################################################
+            print("="*10, " INFERENCE AND SELECTING SAMPLES BY USING REWARD MODEL ", "="*10)
+
             list_rw_value = []
             for sample in tqdm(unobserved_dataset):
                 tokenized_sample = tokenizer(
@@ -656,7 +673,7 @@ if __name__ == '__main__':
             "metric": eval_results['results'][script_args.eval_datasets]
         })
         
-   
+
     # Store final result
     all_result_path = os.path.join(script_args.output_dir, "all_result.json")
     try:
