@@ -588,7 +588,8 @@ if __name__ == '__main__':
                 sanity_check=script_args.sanity_check
             )
         
-            rw_model = get_rw_model(
+            rw_model = get_rw_model_with_adapter(
+                script_args.model_name_or_path,
                 os.path.join(script_args.output_dir, "generator_model"), # Load new adapter model
                 quantization_config,
                 device_map,
