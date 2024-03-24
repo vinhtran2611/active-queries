@@ -657,18 +657,16 @@ if __name__ == '__main__':
         })
         
    
-
     # Store final result
     all_result_path = os.path.join(script_args.output_dir, "all_result.json")
-
-        try:
-            with open(all_result_path, 'w') as json_file:
-                json.dump(eval_metrics, json_file, indent=4)
-            # Print message if successful
-            print(f"Result has been stored at: {all_result_path}")
-        except Exception as e:
-            # Print error message if writing fails
-            print(f"Error occurred while writing result: {e}")
+    try:
+        with open(all_result_path, 'w') as json_file:
+            json.dump(eval_metrics, json_file, indent=4)
+        # Print message if successful
+        print(f"Result has been stored at: {all_result_path}")
+    except Exception as e:
+        # Print error message if writing fails
+        print(f"Error occurred while writing result: {e}")
 
 # python run_pipeline.py --sanity_check True --init_samples 10 --bo_iters 10 --topk_acqf 10 --output_dir /lfs/local/0/sttruong/lhf
     
