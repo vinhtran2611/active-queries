@@ -408,7 +408,7 @@ def run_dpo_finetuning(
         num_train_epochs=script_args.num_train_epochs,
         max_steps=script_args.max_steps,
         logging_steps=script_args.logging_steps,
-        save_steps=script_args.save_steps,
+        # save_steps=script_args.save_steps,
         gradient_accumulation_steps=script_args.gradient_accumulation_steps,
         gradient_checkpointing=script_args.gradient_checkpointing,
         learning_rate=script_args.learning_rate,
@@ -500,13 +500,13 @@ if __name__ == '__main__':
         script_args = script_args
     )
 
-    if script_args.use_peft:
-        model = AutoPeftModelForCausalLM.from_pretrained(
-            os.path.join(script_args.output_dir, "generator_model"),
-            device_map=device_map, torch_dtype=torch.bfloat16
-        )
-        model = model.merge_and_unload()
-        model.save_pretrained(os.path.join(script_args.output_dir, "generator_model"))
+    # if script_args.use_peft:
+    #     model = AutoPeftModelForCausalLM.from_pretrained(
+    #         os.path.join(script_args.output_dir, "generator_model"),
+    #         device_map=device_map, torch_dtype=torch.bfloat16
+    #     )
+    #     model = model.merge_and_unload()
+    #     model.save_pretrained(os.path.join(script_args.output_dir, "generator_model"))
     
     del model
     del model_ref
