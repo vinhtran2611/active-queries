@@ -563,12 +563,21 @@ if __name__ == '__main__':
             if not os.path.exists(rw_model_path):
                 rw_model_path = script_args.model_name_or_path
 
-            rw_model = get_rw_model(
+            # rw_model = get_rw_model(
+            #     script_args.model_name_or_path,
+            #     quantization_config,
+            #     device_map,
+            #     script_args
+            # )
+                
+            rw_model = get_rw_model_with_adapter(
                 script_args.model_name_or_path,
+                os.path.join(script_args.output_dir, "generator_model"), # Load new adapter model
                 quantization_config,
                 device_map,
                 script_args
             )
+            
 
             train_dataset_rw, eval_dataset_rw = get_dataset_for_reward(
                 train_dataset=train_dataset,
