@@ -612,16 +612,16 @@ if __name__ == '__main__':
             script_args = script_args
         )
     
-        if script_args.use_peft:
-            model = AutoPeftModelForCausalLM.from_pretrained(
-                os.path.join(script_args.output_dir, "generator_model"),
-                local_files_only=True, 
-                load_in_4bit=True if script_args.load_in_4bit else False, 
-                device_map=device_map, 
-                # torch_dtype=torch.bfloat16
-            )
-            model.merge_and_unload()
-            model.save_pretrained(os.path.join(script_args.output_dir, "generator_model"))
+        # if script_args.use_peft:
+        #     model = AutoPeftModelForCausalLM.from_pretrained(
+        #         os.path.join(script_args.output_dir, "generator_model"),
+        #         local_files_only=True, 
+        #         load_in_4bit=True if script_args.load_in_4bit else False, 
+        #         device_map=device_map, 
+        #         # torch_dtype=torch.bfloat16
+        #     )
+        #     model.merge_and_unload()
+        #     model.save_pretrained(os.path.join(script_args.output_dir, "generator_model"))
         
         del model
         del model_ref
@@ -645,7 +645,7 @@ if __name__ == '__main__':
 
         # Define the CLI command as a string
         cli_command = f'lm_eval --model hf-auto\
-                        --model_args pretrained={script_args.model_name_or_path},peft={os.path.join(script_args.output_dir, "generator_model")},trust_remote_code=True\
+                        --model_args pretrained={script_args.model_name_or_path},load_in_4bit=True,peft={os.path.join(script_args.output_dir, "generator_model")},trust_remote_code=True\
                         --tasks hellaswag \
                         --device cuda:0 \
                         --batch_size 8 \
