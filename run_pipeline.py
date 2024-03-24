@@ -422,7 +422,7 @@ def run_reward_training(
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        peft_config=peft_config,
+        # peft_config=peft_config,
     )
     
     rw_trainer.train()
