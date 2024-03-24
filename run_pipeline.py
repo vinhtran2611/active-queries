@@ -254,12 +254,11 @@ def get_rw_model_with_adapter(
     # JUST FOR GPT2
     # rw_model.config.pad_token_id = model.config.eos_token_id
 
-    if script_args.rm_freeze_env:
-        for name, param in merge_rw_model.named_parameters():
-            if 'score' in name:  #  'score' is the name of the last layer
-                param.requires_grad = True
-            else:
-                param.requires_grad = False
+    for name, param in merge_rw_model.named_parameters():
+        if 'score' in name:  #  'score' is the name of the last layer
+            param.requires_grad = True
+        else:
+            param.requires_grad = False
             
     return merge_rw_model
 
