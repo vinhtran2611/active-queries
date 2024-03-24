@@ -70,7 +70,7 @@ class ScriptArguments:
     
     max_prompt_length: Optional[int] = field(default=512, metadata={"help": "the maximum prompt length"})
     max_seq_length: Optional[int] = field(default=1024, metadata={"help": "the maximum sequence length"})
-    num_rewards: Optional[int] = field(default=5, metadata={"help": "the number of reward heads"})
+    num_rewards: Optional[int] = field(default=1, metadata={"help": "the number of reward heads"})
 
     num_train_epochs: Optional[int] = field(
         default=1, metadata={"help": "Number of training epochs"}
@@ -564,7 +564,7 @@ if __name__ == '__main__':
                 rw_model_path = script_args.model_name_or_path
 
             rw_model = get_rw_model(
-                rw_model_path,
+                script_args.model_name_or_path,
                 quantization_config,
                 device_map,
                 script_args
