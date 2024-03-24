@@ -131,6 +131,7 @@ elif script_args.load_in_8bit or script_args.load_in_4bit:
 else:
     device_map = None
     quantization_config = None
+print(quantization_config)
 
 if script_args.use_peft:
     peft_config = LoraConfig(
@@ -443,7 +444,7 @@ def run_dpo_finetuning(
     )
     
     dpo_trainer.train()
-    dpo_trainer.model.save_pretrained(output_dir, safe_serialization=False)
+    dpo_trainer.model.save_pretrained(output_dir)
 
 if __name__ == '__main__':
     # LOAD DATASETS
