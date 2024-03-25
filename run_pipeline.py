@@ -699,8 +699,8 @@ if __name__ == '__main__':
             selected_question_ids = [sample[0] for sample in top_samples]
 
             # Update train_dataset and unobserved_dataset 
-            train_dataset = train_dataset.filter(lambda example: example['question_id'] in selected_question_ids)
-            unobserved_dataset = unobserved_dataset.filter(lambda example: example['question_id'] not in selected_question_ids)
+            train_dataset = train_dataset.filter(lambda example: example['id'] in selected_question_ids)
+            unobserved_dataset = unobserved_dataset.filter(lambda example: example['id'] not in selected_question_ids)
 
         elif script_args.algo == "random":
             selected_idxs = np.random.choice(
