@@ -597,7 +597,6 @@ if __name__ == '__main__':
                 script_args
             )
             
-
             train_dataset_rw, eval_dataset_rw = get_dataset_for_reward(
                 train_dataset=train_dataset,
                 eval_dataset=eval_dataset,
@@ -653,6 +652,15 @@ if __name__ == '__main__':
             list_rw_value = np.array(list_rw_value)
             selected_idxs = np.argpartition(list_rw_value, -script_args.topk_acqf)[-script_args.topk_acqf:]
             selected_samples = unobserved_dataset[selected_idxs]
+
+            # Update train_dataset
+            train_dataset = Dataset.from_dict(selected_samples) # ACTIVE QUERIES
+            unobserved_dataset = unobserved_dataset.select(
+                (
+                    i for i in range(len(unobserved_dataset)) 
+                    if i not in selected_idxs
+                )
+            )
         elif script_args.algo == "max_entropy":
             ################################################################
             # INFERENCE AND SELECTING SAMPLES BY MAX ENTROPY
@@ -694,12 +702,13 @@ if __name__ == '__main__':
                 entropy_values_dict[question_id] = entropy_value
                 
             # Select
+            
             sorted_entropy = sorted(entropy_values_dict.items(), key=lambda x: x[1], reverse=True)
             top_samples = sorted_entropy[:script_args.topk_acqf]
             selected_question_ids = [sample[0] for sample in top_samples]
 
             # Update train_dataset and unobserved_dataset 
-            train_dataset = train_dataset.filter(lambda example: example['id'] in selected_question_ids)
+            train_dataset = unobserved_dataset.filter(lambda example: example['id'] in selected_question_ids)
             unobserved_dataset = unobserved_dataset.filter(lambda example: example['id'] not in selected_question_ids)
 
         elif script_args.algo == "random":
