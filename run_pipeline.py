@@ -704,7 +704,7 @@ if __name__ == '__main__':
                 
             # Select
             sorted_entropy = sorted(entropy_values_dict.items(), key=lambda x: x[1], reverse=True)
-            if script_args.topk_acqf_percent > 1:
+            if script_args.topk_acqf > 1:
                 top_samples = sorted_entropy[:script_args.topk_acqf]
             else:
                 num_sample = int(script_args.topk_acqf * len(unobserved_dataset))
