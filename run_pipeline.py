@@ -635,7 +635,7 @@ if __name__ == '__main__':
     
         if script_args.algo == "max_rw":
             ################################################################
-            # INFERENCE AND SELECTING SAMPLES BY USING REWARD MODEL
+            # INFERENCE AND SELECTING SAMPLES BY MAX REWARD 
             ################################################################
             print("="*10, " INFERENCE AND SELECTING SAMPLES BY USING REWARD MODEL ", "="*10)
 
@@ -653,7 +653,55 @@ if __name__ == '__main__':
             list_rw_value = np.array(list_rw_value)
             selected_idxs = np.argpartition(list_rw_value, -script_args.topk_acqf)[-script_args.topk_acqf:]
             selected_samples = unobserved_dataset[selected_idxs]
-            
+        elif script_args.algo == "max_entropy":
+            ################################################################
+            # INFERENCE AND SELECTING SAMPLES BY MAX ENTROPY
+            ################################################################
+            print("="*10, " INFERENCE AND SELECTING SAMPLES BY MAX ENTROPY ", "="*10)
+
+            rw_values_dict = {}
+            for sample in tqdm(unobserved_dataset):
+                question_id = sample['id']
+                if question_id not in rw_values_dict:  # If question_id doesn't exist, create a new entry
+                    tokenized_sample_correct_ans = tokenizer(
+                        sample['chosen'], 
+                        truncation=True, padding=True, 
+                        return_tensors="pt"
+                    )
+                    tokenized_sample_incorrect_ans = tokenizer(
+                        sample['rejected'], 
+                        truncation=True, padding=True, 
+                        return_tensors="pt"
+                    )
+                    rw_value_correct_ans = rw_model(**tokenized_sample_correct_ans).logits.mean(-1).sum()
+                    rw_value_incorrect_ans = rw_model(**tokenized_sample_incorrect_ans).logits.mean(-1).sum()
+                    rw_values_dict[question_id] = [rw_value_correct_ans.item(), rw_value_incorrect_ans.item()]
+                elif question_id in rw_values_dict:  # If question_id exists in the dictionary
+                    tokenized_sample_incorrect_ans = tokenizer(
+                        sample['rejected'], 
+                        truncation=True, padding=True, 
+                        return_tensors="pt"
+                    )
+                    rw_value_incorrect_ans = rw_model(**tokenized_sample_incorrect_ans).logits.mean(-1).sum()
+                    rw_values_dict[question_id].append(rw_value_incorrect_ans.item())
+
+            del rw_model
+
+            from scipy.stats import entropy
+            entropy_values_dict = {}
+            for question_id, rw_values in rw_model.items():
+                entropy_value = entropy(rw_values, base=2) # rw_values = [correct_ans, incorrect_ans, incorrect_ans, incorrect_ans]
+                entropy_values_dict[question_id] = entropy_value
+                
+            # Select
+            sorted_entropy = sorted(entropy_values_dict.items(), key=lambda x: x[1], reverse=True)
+            top_samples = sorted_entropy[:script_args.topk_acqf]
+            selected_question_ids = [sample[0] for sample in top_samples]
+
+            # Update train_dataset and unobserved_dataset 
+            train_dataset = train_dataset.filter(lambda example: example['question_id'] in selected_question_ids)
+            unobserved_dataset = unobserved_dataset.filter(lambda example: example['question_id'] not in selected_question_ids)
+
         elif script_args.algo == "random":
             selected_idxs = np.random.choice(
                 np.arange(len(unobserved_dataset)), 
@@ -661,17 +709,19 @@ if __name__ == '__main__':
                 replace=False
             )
             selected_samples = unobserved_dataset[selected_idxs]
+
+            # Update train_dataset
+            train_dataset = Dataset.from_dict(selected_samples) # ACTIVE QUERIES
+            unobserved_dataset = unobserved_dataset.select(
+                (
+                    i for i in range(len(unobserved_dataset)) 
+                    if i not in selected_idxs
+                )
+            )
         else:
             raise NotImplementedError
             
-        # Update train_dataset
-        train_dataset = Dataset.from_dict(selected_samples) # ACTIVE QUERIES
-        unobserved_dataset = unobserved_dataset.select(
-            (
-                i for i in range(len(unobserved_dataset)) 
-                if i not in selected_idxs
-            )
-        )
+
         
         ################################################################
         # FINE_TUNING LLM (GENERATOR)
