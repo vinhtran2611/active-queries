@@ -110,7 +110,7 @@ class ScriptArguments:
     init_samples: Optional[int] = field(default=1000, metadata={"help": "number of inital samples for warming up reward model"})
     bo_iters: Optional[int] = field(default=20, metadata={"help": "number of BO iterations"})
     # topk_acqf: Union[int, float] = field(default=1000, metadata={"help": "number of acquistion samples in each bo iteration"})
-    topk_acqf: Union[int, float] = field(default=1000, metadata={"help": "number of acquisition samples in each BO iteration"})
+    topk_acqf: Optional[float] = field(default=0.1, metadata={"help": "number of acquisition samples in each BO iteration"})
     algo: Optional[str] = field(default="max_rw", metadata={"help": "Acquistion function"})
     
 parser = HfArgumentParser(ScriptArguments)
@@ -704,7 +704,7 @@ if __name__ == '__main__':
                 
             # Select
             sorted_entropy = sorted(entropy_values_dict.items(), key=lambda x: x[1], reverse=True)
-            if isinstance(script_args.topk_acqf_percent, int):
+            if script_args.topk_acqf_percent > 1:
                 top_samples = sorted_entropy[:script_args.topk_acqf]
             else:
                 num_sample = int(script_args.topk_acqf * len(unobserved_dataset))
@@ -714,7 +714,6 @@ if __name__ == '__main__':
             # Update train_dataset and unobserved_dataset 
             train_dataset = unobserved_dataset.filter(lambda example: example['id'] in selected_question_ids)
             unobserved_dataset = unobserved_dataset.filter(lambda example: example['id'] not in selected_question_ids)
-
         elif script_args.algo == "random":
             selected_idxs = np.random.choice(
                 np.arange(len(unobserved_dataset)), 
