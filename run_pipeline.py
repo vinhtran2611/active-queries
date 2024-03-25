@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import torch
 import copy
@@ -109,7 +109,8 @@ class ScriptArguments:
     rm_freeze_env: Optional[bool] = field(default=False, metadata={"help": "wheather to freeze encoder in reward model or not"})
     init_samples: Optional[int] = field(default=1000, metadata={"help": "number of inital samples for warming up reward model"})
     bo_iters: Optional[int] = field(default=20, metadata={"help": "number of BO iterations"})
-    topk_acqf: Optional[int] = field(default=1000, metadata={"help": "number of acquistion samples in each bo iteration"})
+    # topk_acqf: Union[int, float] = field(default=1000, metadata={"help": "number of acquistion samples in each bo iteration"})
+    topk_acqf: Union[int, float] = field(default=1000, metadata={"help": "number of acquisition samples in each BO iteration"})
     algo: Optional[str] = field(default="max_rw", metadata={"help": "Acquistion function"})
     
 parser = HfArgumentParser(ScriptArguments)
@@ -702,9 +703,12 @@ if __name__ == '__main__':
                 entropy_values_dict[question_id] = entropy_value
                 
             # Select
-            
             sorted_entropy = sorted(entropy_values_dict.items(), key=lambda x: x[1], reverse=True)
-            top_samples = sorted_entropy[:script_args.topk_acqf]
+            if isinstance(script_args.topk_acqf_percent, int):
+                top_samples = sorted_entropy[:script_args.topk_acqf]
+            else:
+                num_sample = int(script_args.topk_acqf * len(unobserved_dataset))
+                top_samples = sorted_entropy[:num_sample]
             selected_question_ids = [sample[0] for sample in top_samples]
 
             # Update train_dataset and unobserved_dataset 
