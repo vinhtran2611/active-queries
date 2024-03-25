@@ -43,6 +43,7 @@ class ScriptArguments:
         metadata={"help": "the location of the SFT model name or path"},
     )
     dataset_name: Optional[str] = field(default="Anthropic/hh-rlhf", metadata={"help": "the dataset name for training"})
+    dataset_subset: Optional[str] = field(default="", metadata={"help": "the dataset name for training"})
     eval_datasets: Optional[str] = field(default="hellaswag", metadata={"help": "the dataset name for eval"})
     dataset_text_field: Optional[str] = field(default="text", metadata={"help": "the text field of the dataset"})
     
@@ -487,10 +488,17 @@ def run_dpo_finetuning(
 
 if __name__ == '__main__':
     # LOAD DATASETS
-    full_dataset = load_dataset(
-        script_args.dataset_name,
-        split="train"
-    )
+    if script_args.dataset_subset != "":
+        full_dataset = load_dataset(
+            script_args.dataset_name,
+            script_args.dataset_subset,
+            split="train",
+        )
+    else:
+        full_dataset = load_dataset(
+            script_args.dataset_name,
+            split="train",
+        )
     # Convert Multiple choice to RHLF (chosen, rejected)
     from .convert_ds_format import create_pairs_with_correct_and_wrong_answers
     full_dataset = create_pairs_with_correct_and_wrong_answers(full_dataset)
@@ -507,10 +515,17 @@ if __name__ == '__main__':
 
     del full_dataset
     
-    eval_dataset = load_dataset(
-        script_args.dataset_name,
-        split="test"
-    )
+    if script_args.dataset_subset != "":
+        eval_dataset = load_dataset(
+            script_args.dataset_name,
+            script_args.dataset_subset,
+            split="test"
+        )
+    else:
+        eval_dataset = load_dataset(
+            script_args.dataset_name,
+            split="test"
+        )
     # Convert Multiple choice to RHLF (chosen, rejected)
     eval_dataset = create_pairs_with_correct_and_wrong_answers(eval_dataset)
 
