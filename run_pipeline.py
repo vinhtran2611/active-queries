@@ -491,6 +491,9 @@ if __name__ == '__main__':
         script_args.dataset_name,
         split="train"
     )
+    # Convert Multiple choice to RHLF (chosen, rejected)
+    from .convert_ds_format import create_pairs_with_correct_and_wrong_answers
+    full_dataset = create_pairs_with_correct_and_wrong_answers(full_dataset)
 
     train_dataset = copy.deepcopy(full_dataset[:script_args.init_samples])
     train_dataset = Dataset.from_dict(train_dataset)
@@ -508,6 +511,8 @@ if __name__ == '__main__':
         script_args.dataset_name,
         split="test"
     )
+    # Convert Multiple choice to RHLF (chosen, rejected)
+    eval_dataset = create_pairs_with_correct_and_wrong_answers(eval_dataset)
 
     # WARM-UP LLM (GENERATOR)
     print("="*10, " WARMING UP GENERATOR ", "="*10)
