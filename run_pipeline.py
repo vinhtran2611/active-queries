@@ -709,46 +709,45 @@ if __name__ == '__main__':
         ################################################################
         # EVALUATING LLM (GENERATOR)
         ################################################################
-        print("="*10, " EVALUATING GENERATOR ", "="*10)
+    #     print("="*10, " EVALUATING GENERATOR ", "="*10)
 
-        # Construct the full path including the file name
-        eval_json_file = os.path.join(eval_dir, f'eval_results_{iter}.json')
+    #     # Construct the full path including the file name
+    #     eval_json_file = os.path.join(eval_dir, f'eval_results_{iter}.json')
 
-        # Define the CLI command as a string
-        cli_command = f'lm_eval --model hf\
-                        --model_args pretrained={script_args.model_name_or_path},peft={os.path.join(script_args.output_dir, "generator_model")},trust_remote_code=True,load_in_4bit=True\
-                        --tasks {script_args.eval_datasets} \
-                        --device cuda:0 \
-                        --batch_size 8 \
-                        --output_path {eval_json_file} \
-                        {"--limit 100" if script_args.sanity_check else ""}'
+    #     # Define the CLI command as a string
+    #     cli_command = f'lm_eval --model hf\
+    #                     --model_args pretrained={script_args.model_name_or_path},peft={os.path.join(script_args.output_dir, "generator_model")},trust_remote_code=True,load_in_4bit=True\
+    #                     --tasks {script_args.eval_datasets} \
+    #                     --device cuda:0 \
+    #                     --batch_size 8 \
+    #                     --output_path {eval_json_file} \
+    #                     {"--limit 100" if script_args.sanity_check else ""}'
         
-        exit_code = os.system(cli_command)
-        # Check the exit code for success or failure
-        if exit_code == 0:
-            print("Command executed successfully")
-        else:
-            print("Command failed with exit code:", exit_code)
+    #     exit_code = os.system(cli_command)
+    #     # Check the exit code for success or failure
+    #     if exit_code == 0:
+    #         print("Command executed successfully")
+    #     else:
+    #         print("Command failed with exit code:", exit_code)
 
-        with open(eval_json_file) as json_file:
-            eval_results = json.load(json_file)
+    #     with open(eval_json_file) as json_file:
+    #         eval_results = json.load(json_file)
 
-        eval_metrics.append({
-            "iteration": iter,
-            "metric": eval_results['results'][script_args.eval_datasets]
-        })
+    #     eval_metrics.append({
+    #         "iteration": iter,
+    #         "metric": eval_results['results'][script_args.eval_datasets]
+    #     })
         
 
-    # Store final result
-    all_result_path = os.path.join(script_args.output_dir, "all_result.json")
-    try:
-        with open(all_result_path, 'w') as json_file:
-            json.dump(eval_metrics, json_file, indent=4)
-        # Print message if successful
-        print(f"Result has been stored at: {all_result_path}")
-    except Exception as e:
-        # Print error message if writing fails
-        print(f"Error occurred while writing result: {e}")
+    # # Store final result
+    # all_result_path = os.path.join(script_args.output_dir, "all_result.json")
+    # try:
+    #     with open(all_result_path, 'w') as json_file:
+    #         json.dump(eval_metrics, json_file, indent=4)
+    #     # Print message if successful
+    #     print(f"Result has been stored at: {all_result_path}")
+    # except Exception as e:
+    #     # Print error message if writing fails
+    #     print(f"Error occurred while writing result: {e}")
 
-# python run_pipeline.py --sanity_check True --init_samples 10 --bo_iters 10 --topk_acqf 10 --output_dir /lfs/local/0/sttruong/lhf
-    
+# !python run_pipeline.py --sanity_check True --dataset_name allenai/ai2_arc --dataset_subset ARC-Easy --model_name_or_path reciprocate/tiny-llama --init_samples 20 --bo_iters 2 --topk_acqf 10 --output_dir output_active_queries    
