@@ -682,7 +682,7 @@ if __name__ == '__main__':
                         truncation=True, padding=True, 
                         return_tensors="pt"
                     )
-                    rw_value_correct_ans = rw_model(**tokenized_sample_correct_ans).logits.mean(-1).sum()
+                    rw_value_correct_ans = rw_model(**tokenized_sample_correct_ans).logits.mean(-1).sum() #SequenceClassifierOutputWithPast(loss={'logits': tensor([[-0.2898]], dtype=torch.float16, grad_fn=<ToCopyBackward0>)}, logits=tensor([[-0.2898]], dtype=torch.float16, grad_fn=<ToCopyBackward0>), past_key_values=None, hidden_states=None, attentions=None)
                     rw_value_incorrect_ans = rw_model(**tokenized_sample_incorrect_ans).logits.mean(-1).sum()
                     rw_values_dict[question_id] = [rw_value_correct_ans.item(), rw_value_incorrect_ans.item()]
                 elif question_id in rw_values_dict:  # If question_id exists in the dictionary
