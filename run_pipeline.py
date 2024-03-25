@@ -500,7 +500,7 @@ if __name__ == '__main__':
             split="train",
         )
     # Convert Multiple choice to RHLF (chosen, rejected)
-    from .convert_ds_format import create_pairs_with_correct_and_wrong_answers
+    from convert_ds_format import create_pairs_with_correct_and_wrong_answers
     full_dataset = create_pairs_with_correct_and_wrong_answers(full_dataset)
 
     train_dataset = copy.deepcopy(full_dataset[:script_args.init_samples])
