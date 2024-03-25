@@ -689,7 +689,7 @@ if __name__ == '__main__':
 
             from scipy.stats import entropy
             entropy_values_dict = {}
-            for question_id, rw_values in rw_model.items():
+            for question_id, rw_values in rw_values_dict.items():
                 entropy_value = entropy(rw_values, base=2) # rw_values = [correct_ans, incorrect_ans, incorrect_ans, incorrect_ans]
                 entropy_values_dict[question_id] = entropy_value
                 
@@ -721,8 +721,6 @@ if __name__ == '__main__':
         else:
             raise NotImplementedError
             
-
-        
         ################################################################
         # FINE_TUNING LLM (GENERATOR)
         ################################################################
