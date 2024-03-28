@@ -174,7 +174,8 @@ def get_generator(
     model_name_or_path,
     quantization_config,
     device_map,
-    script_args
+    script_args,
+    peft_config
 ):
     model = AutoModelForCausalLM.from_pretrained(
         model_name_or_path,
@@ -192,6 +193,10 @@ def get_generator(
         model._ddp_params_and_buffers_to_ignore = [
             name for name, buffer in model.named_buffers() if buffer.dtype == torch.bool
         ]
+
+    # modify
+    model.add_adapter(peft_config)
+    
     return model
 
 def get_generator_with_adapter(
