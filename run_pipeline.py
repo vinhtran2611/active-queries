@@ -754,7 +754,6 @@ if __name__ == '__main__':
             # Update train_dataset and unobserved_dataset 
             train_dataset = unobserved_dataset.filter(lambda example: example['id'] in selected_question_ids)
             unobserved_dataset = unobserved_dataset.filter(lambda example: example['id'] not in selected_question_ids)
-
         elif script_args.algo == "random":
             selected_idxs = np.random.choice(
                 np.arange(len(unobserved_dataset)), 
@@ -778,7 +777,7 @@ if __name__ == '__main__':
         # FINE_TUNING LLM (GENERATOR)
         ################################################################
         print("="*10, " FINETUNING GENERATOR ", "="*10)
-        print(train_dataset)
+        print(train_dataset[0])
         
         train_dataset_lm, eval_dataset_lm = get_dataset_for_finetuning(
             train_dataset=train_dataset, # ACTIVE QUERIES
