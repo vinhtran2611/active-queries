@@ -290,7 +290,7 @@ def get_rw_model_with_peft_config(
             param.requires_grad = True
 
     
-    rw_model.add_adapter(peft_config_rw)
+    rw_model.add_adapter(peft_config_rw, adapter_name="adapter_1")
     return rw_model
 
 ######################################################
