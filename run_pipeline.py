@@ -608,8 +608,8 @@ if __name__ == '__main__':
         script_args = script_args
     )
 
-    del model
-    del model_ref
+    # del model
+    # del model_ref
         
     # SAVING TOKENIZER
     tokenizer.save_pretrained(os.path.join(script_args.output_dir, "generator_model"))
@@ -677,7 +677,9 @@ if __name__ == '__main__':
                 peft_config = peft_config_rw,
                 script_args = script_args
             )
-    
+        del model
+        del model_ref
+        
         if script_args.algo == "max_rw":
             ################################################################
             # INFERENCE AND SELECTING SAMPLES BY MAX REWARD 
