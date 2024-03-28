@@ -285,7 +285,6 @@ def get_rw_model_with_peft_config(
     rw_model.config.pretraining_tp = 2
     rw_model.config.pad_token_id = rw_model.config.eos_token_id
 
-
     for name, param in rw_model.named_parameters():
         if 'score' in name:  #  'score' is the name of the last layer
             param.requires_grad = True
@@ -638,7 +637,7 @@ if __name__ == '__main__':
                 peft_config_rw
             )
             # COPY BACKBONE
-            copy_backbone(rw_model, model)
+            # copy_backbone(rw_model, model)
             
             train_dataset_rw, eval_dataset_rw = get_dataset_for_reward(
                 train_dataset=train_dataset,
@@ -667,7 +666,7 @@ if __name__ == '__main__':
             )
 
             # COPY BACKBONE
-            copy_backbone(rw_model, model)
+            # copy_backbone(rw_model, model)
             
             run_reward_training(
                 model = rw_model,
@@ -677,9 +676,10 @@ if __name__ == '__main__':
                 peft_config = peft_config_rw,
                 script_args = script_args
             )
+
         del model
         del model_ref
-        
+
         if script_args.algo == "max_rw":
             ################################################################
             # INFERENCE AND SELECTING SAMPLES BY MAX REWARD 
