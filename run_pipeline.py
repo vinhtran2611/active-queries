@@ -200,7 +200,6 @@ def get_generator(
     return model
 
 def get_generator_with_adapter(
-    # base_model_name_or_path,
     peft_adapter_path,
     quantization_config,
     device_map,
@@ -217,22 +216,6 @@ def get_generator_with_adapter(
     model.config.pretraining_tp = 1
     model.config.pad_token_id = model.config.eos_token_id
     model.enable_input_require_grads()
-
-    # # merge_generator_model = PeftModel.from_pretrained(model, peft_adapter_path)
-    # from peft.tuners.lora import mark_only_lora_as_trainable
-
-    # model = PeftModel.from_pretrained(model, peft_adapter_path, is_trainable=True)
-    # # mark_only_lora_as_trainable(lora_model)
-    # model._mark_only_adapters_as_trainable()
-
-
-    from peft import PeftModel, PeftConfig, prepare_model_for_kbit_training
-    # config = PeftConfig.from_pretrained(peft_adapter_path)
-    # model = PeftModel.from_pretrained(model, peft_adapter_path)
- 
-    model = prepare_model_for_kbit_training(model)
-    # model.train()
-    # model.print_trainable_parameters()
 
     return model
 
@@ -274,14 +257,13 @@ def get_rw_model(
 
 
 def get_rw_model_with_adapter(
-    base_model_name_or_path,
     peft_adapter_path,
     quantization_config,
     device_map,
     script_args
 ): 
     rw_model = AutoModelForSequenceClassification.from_pretrained(
-        base_model_name_or_path,
+        peft_adapter_path,
         low_cpu_mem_usage=True,
         quantization_config=quantization_config,
         device_map=device_map,
@@ -293,18 +275,18 @@ def get_rw_model_with_adapter(
     rw_model.config.pretraining_tp = 2
     rw_model.config.pad_token_id = rw_model.config.eos_token_id
 
-    merge_rw_model = PeftModel.from_pretrained(rw_model, peft_adapter_path)
+    # merge_rw_model = PeftModel.from_pretrained(rw_model, peft_adapter_path)
 
     # JUST FOR GPT2
     # rw_model.config.pad_token_id = model.config.eos_token_id
 
-    for name, param in merge_rw_model.named_parameters():
+    for name, param in rw_model.named_parameters():
         if 'score' in name:  #  'score' is the name of the last layer
             param.requires_grad = True
         else:
             param.requires_grad = False
             
-    return merge_rw_model
+    return rw_model
 
 ######################################################
 #################### TOKENIZER #######################
@@ -522,7 +504,7 @@ def run_dpo_finetuning(
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         tokenizer=tokenizer,
-        peft_config=peft_config if not is_merged else None,
+        peft_config=None if is_merged else peft_config,
         max_prompt_length=script_args.max_prompt_length,
         max_length=script_args.max_seq_length
     )
@@ -629,7 +611,6 @@ if __name__ == '__main__':
                 rw_model_path = script_args.model_name_or_path
                 
             rw_model = get_rw_model_with_adapter(
-                script_args.model_name_or_path,
                 os.path.join(script_args.output_dir, "generator_model"), # Load new adapter model
                 quantization_config,
                 device_map,
@@ -655,7 +636,6 @@ if __name__ == '__main__':
             )
         
             rw_model = get_rw_model_with_adapter(
-                script_args.model_name_or_path,
                 os.path.join(script_args.output_dir, "generator_model"), # Load new adapter model
                 quantization_config,
                 device_map,
@@ -705,6 +685,7 @@ if __name__ == '__main__':
             # INFERENCE AND SELECTING SAMPLES BY MAX ENTROPY
             ################################################################
             print("="*10, " INFERENCE AND SELECTING SAMPLES BY MAX ENTROPY ", "="*10)
+            print(unobserved_dataset)
 
             rw_values_dict = {}
             for sample in tqdm(unobserved_dataset):
@@ -785,7 +766,7 @@ if __name__ == '__main__':
             max_seq_length=script_args.max_seq_length,
             sanity_check=script_args.sanity_check
         )
-        
+
         model = get_generator_with_adapter(
             # script_args.model_name_or_path,
             os.path.join(script_args.output_dir, "generator_model"),
