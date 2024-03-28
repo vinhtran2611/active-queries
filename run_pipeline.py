@@ -265,14 +265,15 @@ def get_rw_model(
     return rw_model
 
 
-def get_rw_model_with_adapter(
-    peft_adapter_path,
+def get_rw_model_with_peft_config(
+    model_name_or_path,
     quantization_config,
     device_map,
-    script_args
+    script_args,
+    peft_config_rw
 ): 
     rw_model = AutoModelForSequenceClassification.from_pretrained(
-        peft_adapter_path,
+        model_name_or_path,
         low_cpu_mem_usage=True,
         quantization_config=quantization_config,
         device_map=device_map,
@@ -284,17 +285,13 @@ def get_rw_model_with_adapter(
     rw_model.config.pretraining_tp = 2
     rw_model.config.pad_token_id = rw_model.config.eos_token_id
 
-    # merge_rw_model = PeftModel.from_pretrained(rw_model, peft_adapter_path)
-
-    # JUST FOR GPT2
-    # rw_model.config.pad_token_id = model.config.eos_token_id
 
     for name, param in rw_model.named_parameters():
         if 'score' in name:  #  'score' is the name of the last layer
             param.requires_grad = True
-        else:
-            param.requires_grad = False
-            
+
+    
+    rw_model.add_adapter(peft_config_rw)
     return rw_model
 
 ######################################################
@@ -423,6 +420,18 @@ def get_dataset_for_finetuning(
 ######################################################
 ##################### RUNNERS ########################
 ######################################################
+def copy_weights_with_keyword(model_source, model_destination, keyword ='lora'):
+    # Get layers containing the keyword from both models
+    source_layers = {name: p for name, p in model_source.named_parameters() if keyword in name}
+    destination_layers = {name: p for name, p in model_destination.named_parameters() if keyword in name}
+
+    # Iterate through the layers and copy weights if shapes match
+    for name, source_params in source_layers.items():
+        if name in destination_layers and source_params.shape == destination_layers[name].shape:
+            # Ensure both tensors are on the same device
+            dest_data = destination_layers[name].data.to(source_params.device)
+            source_params.data.copy_(dest_data)
+
 def run_reward_training(
     model, 
     tokenizer,
@@ -619,11 +628,12 @@ if __name__ == '__main__':
             if not os.path.exists(rw_model_path):
                 rw_model_path = script_args.model_name_or_path
                 
-            rw_model = get_rw_model_with_adapter(
-                os.path.join(script_args.output_dir, "generator_model"), # Load new adapter model
+            rw_model = get_rw_model_with_peft_config(
+                script_args.model_name_or_path,
                 quantization_config,
                 device_map,
-                script_args
+                script_args,
+                peft_config_rw
             )
             
             train_dataset_rw, eval_dataset_rw = get_dataset_for_reward(
@@ -643,13 +653,18 @@ if __name__ == '__main__':
                 max_seq_length=script_args.max_seq_length,
                 sanity_check=script_args.sanity_check
             )
-        
-            rw_model = get_rw_model_with_adapter(
-                os.path.join(script_args.output_dir, "generator_model"), # Load new adapter model
+
+            rw_model = get_rw_model_with_peft_config(
+                script_args.model_name_or_path,
                 quantization_config,
                 device_map,
-                script_args
+                script_args, 
+                peft_config_rw
             )
+
+            # COPY BACKBONE
+            copy_weights_with_keyword(rw_model, model)
+        
             
             run_reward_training(
                 model = rw_model,
