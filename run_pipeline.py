@@ -231,8 +231,8 @@ def get_generator_with_adapter(
     # model = PeftModel.from_pretrained(model, peft_adapter_path)
  
     model = prepare_model_for_kbit_training(model)
-    model.train()
-    model.print_trainable_parameters()
+    # model.train()
+    # model.print_trainable_parameters()
 
     return model
 
