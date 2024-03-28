@@ -224,10 +224,10 @@ def get_generator_with_adapter(
     from peft import PeftModel, PeftConfig, prepare_model_for_kbit_training
     # config = PeftConfig.from_pretrained(peft_adapter_path)
     # model = PeftModel.from_pretrained(model, peft_adapter_path)
-    # # Even though we are not going to train the model, I struggled with the implementation of some of the libraries
-    # # that could not reconcile the different floating point precision in the Model and in the LoRAs. The command
-    # # below manages to reconcile the different precisions
+ 
     model = prepare_model_for_kbit_training(model)
+    model.train()
+    model.print_trainable_parameters()
 
     return model
 
