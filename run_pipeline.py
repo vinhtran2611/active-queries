@@ -627,13 +627,6 @@ if __name__ == '__main__':
             rw_model_path = os.path.join(script_args.output_dir, "generator_model")
             if not os.path.exists(rw_model_path):
                 rw_model_path = script_args.model_name_or_path
-
-            # rw_model = get_rw_model(
-            #     script_args.model_name_or_path,
-            #     quantization_config,
-            #     device_map,
-            #     script_args
-            # )
                 
             rw_model = get_rw_model_with_adapter(
                 script_args.model_name_or_path,
@@ -761,6 +754,7 @@ if __name__ == '__main__':
             # Update train_dataset and unobserved_dataset 
             train_dataset = unobserved_dataset.filter(lambda example: example['id'] in selected_question_ids)
             unobserved_dataset = unobserved_dataset.filter(lambda example: example['id'] not in selected_question_ids)
+
         elif script_args.algo == "random":
             selected_idxs = np.random.choice(
                 np.arange(len(unobserved_dataset)), 
@@ -784,19 +778,14 @@ if __name__ == '__main__':
         # FINE_TUNING LLM (GENERATOR)
         ################################################################
         print("="*10, " FINETUNING GENERATOR ", "="*10)
+        print(train_dataset)
+        
         train_dataset_lm, eval_dataset_lm = get_dataset_for_finetuning(
             train_dataset=train_dataset, # ACTIVE QUERIES
             eval_dataset=eval_dataset,
             max_seq_length=script_args.max_seq_length,
             sanity_check=script_args.sanity_check
         )
-
-        # model = get_generator(
-        #     os.path.join(script_args.output_dir, "generator_model"),
-        #     quantization_config,
-        #     device_map,
-        #     script_args
-        # )
         
         model = get_generator_with_adapter(
             # script_args.model_name_or_path,
