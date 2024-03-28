@@ -53,7 +53,7 @@ class ScriptArguments:
     weight_decay: Optional[float] = field(default=0.05, metadata={"help": "the weight decay"})
     optimizer_type: Optional[str] = field(default="paged_adamw_32bit", metadata={"help": "the optimizer type"})
 
-    per_device_train_batch_size: Optional[int] = field(default=4, metadata={"help": "train batch size per device"})
+    per_device_train_batch_size: Optional[int] = field(default=1, metadata={"help": "train batch size per device"})
     per_device_eval_batch_size: Optional[int] = field(default=1, metadata={"help": "eval batch size per device"})
     gradient_accumulation_steps: Optional[int] = field(
         default=4, metadata={"help": "the number of gradient accumulation steps"}
@@ -177,7 +177,7 @@ def get_generator(
     script_args
 ):
     model = AutoModelForCausalLM.from_pretrained(
-        script_args.model_name_or_path,
+        model_name_or_path,
         low_cpu_mem_usage=True,
         quantization_config=quantization_config,
         device_map=device_map,
@@ -812,4 +812,4 @@ if __name__ == '__main__':
     #     # Print error message if writing fails
     #     print(f"Error occurred while writing result: {e}")
 
-# !python run_pipeline.py --sanity_check True --dataset_name allenai/ai2_arc --dataset_subset ARC-Easy --model_name_or_path reciprocate/tiny-llama --init_samples 20 --bo_iters 2 --topk_acqf 10 --output_dir output_active_queries    
+# !python run_pipeline.py --dataset_name allenai/ai2_arc --dataset_subset ARC-Easy --model_name_or_path meta-llama/Llama-2-7b-hf --algo max_entropy --init_samples 200 --bo_iters 3 --topk_acqf 0.1 --output_dir output_active_queries --sanity_check True
