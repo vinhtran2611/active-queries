@@ -496,7 +496,7 @@ def run_dpo_finetuning(
         
     dpo_trainer = DPOTrainer(
         model,
-        model_ref = model_ref, # None if peft_config
+        model_ref, # None if peft_config
         args=training_args,
         beta=script_args.beta,
         train_dataset=train_dataset,
