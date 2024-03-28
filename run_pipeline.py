@@ -202,7 +202,7 @@ def get_generator_with_adapter(
     script_args
 ):
     model = AutoModelForCausalLM.from_pretrained(
-        peft_adapter_path,
+        base_model_name_or_path,
         low_cpu_mem_usage=True,
         quantization_config=quantization_config,
         device_map=device_map,
@@ -216,10 +216,20 @@ def get_generator_with_adapter(
     # # merge_generator_model = PeftModel.from_pretrained(model, peft_adapter_path)
     # from peft.tuners.lora import mark_only_lora_as_trainable
 
-    # lora_model = PeftModel.from_pretrained(model, peft_adapter_path, is_trainable=True)
+    # model = PeftModel.from_pretrained(model, peft_adapter_path, is_trainable=True)
     # # mark_only_lora_as_trainable(lora_model)
-    # lora_model._mark_only_adapters_as_trainable()
-    
+    # model._mark_only_adapters_as_trainable()
+
+
+    from peft import PeftModel, PeftConfig, prepare_model_for_kbit_training
+    config = PeftConfig.from_pretrained(peft_adapter_path)
+    model = PeftModel.from_pretrained(model, peft_adapter_path)
+    # Even though we are not going to train the model, I struggled with the implementation of some of the libraries
+    # that could not reconcile the different floating point precision in the Model and in the LoRAs. The command
+    # below manages to reconcile the different precisions
+    model = prepare_model_for_kbit_training(model)
+
+
     return model
 
 ######################################################
