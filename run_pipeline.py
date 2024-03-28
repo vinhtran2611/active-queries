@@ -458,7 +458,8 @@ def run_dpo_finetuning(
     train_dataset,
     eval_dataset,
     peft_config,
-    script_args
+    script_args,
+    is_merged = True
 ):
     output_dir = os.path.join(script_args.output_dir, "generator_model")
     
@@ -495,13 +496,13 @@ def run_dpo_finetuning(
         
     dpo_trainer = DPOTrainer(
         model,
-        model_ref, # None if peft_config
+        model_ref = None, # None if peft_config
         args=training_args,
         beta=script_args.beta,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         tokenizer=tokenizer,
-        peft_config=peft_config,
+        peft_config=peft_config if not is_merged else None,
         max_prompt_length=script_args.max_prompt_length,
         max_length=script_args.max_seq_length
     )
@@ -768,7 +769,14 @@ if __name__ == '__main__':
             max_seq_length=script_args.max_seq_length,
             sanity_check=script_args.sanity_check
         )
-    
+
+        # model = get_generator(
+        #     os.path.join(script_args.output_dir, "generator_model"),
+        #     quantization_config,
+        #     device_map,
+        #     script_args
+        )
+        
         model = get_generator_with_adapter(
             script_args.model_name_or_path,
             os.path.join(script_args.output_dir, "generator_model"),
@@ -787,6 +795,7 @@ if __name__ == '__main__':
             eval_dataset = eval_dataset_lm,
             peft_config = peft_config,
             script_args = script_args
+            is_merged = True,
         )
         
         del model
