@@ -282,8 +282,8 @@ def get_rw_model_with_peft_config(
     )
 
     rw_model.config.use_cache = False
-    rw_model.config.pretraining_tp = 2
-    rw_model.config.pad_token_id = rw_model.config.eos_token_id
+    # rw_model.config.pretraining_tp = 2
+    # rw_model.config.pad_token_id = rw_model.config.eos_token_id
 
     for name, param in rw_model.named_parameters():
         if 'score' in name:  #  'score' is the name of the last layer
@@ -291,6 +291,8 @@ def get_rw_model_with_peft_config(
 
     
     rw_model.add_adapter(peft_config_rw, adapter_name="adapter_1")
+    rw_model.set_adapter("adapter_1")
+
     return rw_model
 
 ######################################################
