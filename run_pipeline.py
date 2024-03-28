@@ -158,9 +158,18 @@ if script_args.use_peft:
         r=script_args.lora_r,
         lora_alpha=script_args.lora_alpha,
         lora_dropout=script_args.lora_dropout,
+        target_modules=[
+            "q_proj",
+            "v_proj",
+            "k_proj",
+            "out_proj",
+            "fc_in",
+            "fc_out",
+            "wte",
+        ],
         bias="none",
         task_type="SEQ_CLS",
-        modules_to_save=["scores"]
+        # modules_to_save=["scores"]
     )
 else:
     peft_config = None
