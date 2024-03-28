@@ -775,7 +775,7 @@ if __name__ == '__main__':
         #     quantization_config,
         #     device_map,
         #     script_args
-        )
+        # )
         
         model = get_generator_with_adapter(
             script_args.model_name_or_path,
