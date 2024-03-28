@@ -202,7 +202,7 @@ def get_generator_with_adapter(
     script_args
 ):
     model = AutoModelForCausalLM.from_pretrained(
-        base_model_name_or_path,
+        peft_adapter_path,
         low_cpu_mem_usage=True,
         quantization_config=quantization_config,
         device_map=device_map,
@@ -213,15 +213,14 @@ def get_generator_with_adapter(
     model.config.pad_token_id = model.config.eos_token_id
     model.enable_input_require_grads()
 
-    # merge_generator_model = PeftModel.from_pretrained(model, peft_adapter_path)
-    from peft.tuners.lora import mark_only_lora_as_trainable
+    # # merge_generator_model = PeftModel.from_pretrained(model, peft_adapter_path)
+    # from peft.tuners.lora import mark_only_lora_as_trainable
 
-    lora_model = PeftModel.from_pretrained(model, peft_adapter_path, is_trainable=True)
-    # mark_only_lora_as_trainable(lora_model)
-    lora_model._mark_only_adapters_as_trainable()
-
-
-    return lora_model
+    # lora_model = PeftModel.from_pretrained(model, peft_adapter_path, is_trainable=True)
+    # # mark_only_lora_as_trainable(lora_model)
+    # lora_model._mark_only_adapters_as_trainable()
+    
+    return model
 
 ######################################################
 ################## REWARD MODEL ######################
