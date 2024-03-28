@@ -282,8 +282,8 @@ def get_rw_model_with_peft_config(
     )
 
     rw_model.config.use_cache = False
-    # rw_model.config.pretraining_tp = 2
-    # rw_model.config.pad_token_id = rw_model.config.eos_token_id
+    rw_model.config.pretraining_tp = 2
+    rw_model.config.pad_token_id = rw_model.config.eos_token_id
 
     for name, param in rw_model.named_parameters():
         if 'score' in name:  #  'score' is the name of the last layer
@@ -444,7 +444,6 @@ def run_reward_training(
     tokenizer,
     train_dataset,
     eval_dataset,
-    peft_config,
     script_args
 ):
     output_dir = os.path.join(script_args.output_dir, "reward_model")
@@ -472,7 +471,6 @@ def run_reward_training(
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        # peft_config=peft_config,
     )
     
     rw_trainer.train()
