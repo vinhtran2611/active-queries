@@ -794,7 +794,7 @@ if __name__ == '__main__':
             train_dataset = train_dataset_lm,
             eval_dataset = eval_dataset_lm,
             peft_config = peft_config,
-            script_args = script_args
+            script_args = script_args,
             is_merged = True,
         )
         
