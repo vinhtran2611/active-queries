@@ -211,12 +211,15 @@ def get_generator_with_adapter(
     model.config.use_cache = False
     model.config.pretraining_tp = 1
     model.config.pad_token_id = model.config.eos_token_id
+    model.enable_input_require_grads()
 
     # merge_generator_model = PeftModel.from_pretrained(model, peft_adapter_path)
     from peft.tuners.lora import mark_only_lora_as_trainable
-    
+
     lora_model = PeftModel.from_pretrained(model, peft_adapter_path, is_trainable=True)
-    mark_only_lora_as_trainable(lora_model)
+    # mark_only_lora_as_trainable(lora_model)
+    lora_model._mark_only_adapters_as_trainable()
+
 
     return lora_model
 
