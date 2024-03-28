@@ -586,7 +586,8 @@ if __name__ == '__main__':
         script_args.model_name_or_path,
         quantization_config,
         device_map,
-        script_args
+        script_args,
+        peft_config
     )
 
     model_ref = copy.deepcopy(model) if peft_config else None
