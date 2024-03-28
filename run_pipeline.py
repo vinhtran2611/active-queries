@@ -212,7 +212,9 @@ def get_generator_with_adapter(
     model.config.pretraining_tp = 1
     model.config.pad_token_id = model.config.eos_token_id
 
-    merge_generator_model = PeftModel.from_pretrained(model, peft_adapter_path)
+    # merge_generator_model = PeftModel.from_pretrained(model, peft_adapter_path)
+    model.load_adapter(peft_adapter_path)
+
 
     return merge_generator_model
 
