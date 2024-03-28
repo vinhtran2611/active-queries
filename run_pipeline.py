@@ -290,8 +290,9 @@ def get_rw_model_with_peft_config(
             param.requires_grad = True
 
     
-    rw_model.add_adapter(peft_config_rw, adapter_name="adapter_1")
-    rw_model.set_adapter("adapter_1")
+    rw_model.add_adapter(peft_config_rw)
+    rw_model.enable_adapters()
+    # rw_model.set_adapter("adapter_1")
 
     return rw_model
 
@@ -428,6 +429,7 @@ def copy_backbone(model_source, model_destination, keyword ='lora'):
 
     # Iterate through the layers and copy weights if shapes match
     for name, source_params in source_layers.items():
+        # temp = copy(name) 
         if name in destination_layers and source_params.shape == destination_layers[name].shape:
             # Ensure both tensors are on the same device
             dest_data = destination_layers[name].data.to(source_params.device)
