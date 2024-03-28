@@ -420,7 +420,7 @@ def get_dataset_for_finetuning(
 ######################################################
 ##################### RUNNERS ########################
 ######################################################
-def copy_weights_with_keyword(model_source, model_destination, keyword ='lora'):
+def copy_backbone(model_source, model_destination, keyword ='lora'):
     # Get layers containing the keyword from both models
     source_layers = {name: p for name, p in model_source.named_parameters() if keyword in name}
     destination_layers = {name: p for name, p in model_destination.named_parameters() if keyword in name}
@@ -431,6 +431,12 @@ def copy_weights_with_keyword(model_source, model_destination, keyword ='lora'):
             # Ensure both tensors are on the same device
             dest_data = destination_layers[name].data.to(source_params.device)
             source_params.data.copy_(dest_data)
+
+    for name, param in model_source.named_parameters():
+        if 'score' in name:  #  'score' is the name of the last layer
+            param.requires_grad = True
+        else:
+            param.requires_grad = False
 
 def run_reward_training(
     model, 
@@ -623,18 +629,16 @@ if __name__ == '__main__':
         ################################################################
         # PREPARE REWARD MODELS
         ################################################################
-        if iter == 0:
-            rw_model_path = os.path.join(script_args.output_dir, "generator_model")
-            if not os.path.exists(rw_model_path):
-                rw_model_path = script_args.model_name_or_path
-                
+        if iter == 0:  
             rw_model = get_rw_model_with_peft_config(
                 script_args.model_name_or_path,
                 quantization_config,
                 device_map,
-                script_args,
+                script_args, 
                 peft_config_rw
             )
+            # COPY BACKBONE
+            copy_backbone(rw_model, model)
             
             train_dataset_rw, eval_dataset_rw = get_dataset_for_reward(
                 train_dataset=train_dataset,
@@ -663,8 +667,7 @@ if __name__ == '__main__':
             )
 
             # COPY BACKBONE
-            copy_weights_with_keyword(rw_model, model)
-        
+            copy_backbone(rw_model, model)
             
             run_reward_training(
                 model = rw_model,
