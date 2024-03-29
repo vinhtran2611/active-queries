@@ -271,7 +271,6 @@ def get_rw_model_with_peft_config(
     device_map,
     script_args,
     peft_config_rw,
-    adapter_name = 'adapter_1'
 ): 
     rw_model = AutoModelForSequenceClassification.from_pretrained(
         model_name_or_path,
@@ -289,11 +288,6 @@ def get_rw_model_with_peft_config(
     for name, param in rw_model.named_parameters():
         if 'score' in name:  #  'score' is the name of the last layer
             param.requires_grad = True
-
-    
-    # rw_model.add_adapter(peft_config_rw, adapter_name)
-    # # rw_model.enable_adapters()
-    # rw_model.set_adapter(adapter_name)
             
     rw_model = get_peft_model(rw_model, peft_config_rw)
 
@@ -425,20 +419,24 @@ def get_dataset_for_finetuning(
 ######################################################
 ##################### RUNNERS ########################
 ######################################################
-def copy_backbone(model_source, model_destination, keyword ='lora'):
+def copy_backbone(rw_model, gen_model, keyword ='lora'):
     # Get layers containing the keyword from both models
-    source_layers = {name: p for name, p in model_source.named_parameters() if keyword in name}
-    destination_layers = {name: p for name, p in model_destination.named_parameters() if keyword in name}
+    rw_layers = {name: p for name, p in rw_model.named_parameters() if keyword in name} # base_model.model.model.layers.21.self_attn.v_proj.lora_B.default.weight
+    gen_layers = {name: p for name, p in gen_model.named_parameters() if keyword in name} # model.layers.20.self_attn.v_proj.lora_A.default.weight
+
 
     # Iterate through the layers and copy weights if shapes match
-    for name, source_params in source_layers.items():
-        if name in destination_layers and source_params.shape == destination_layers[name].shape:
-            # Ensure both tensors are on the same device
-            dest_data = destination_layers[name].data.to(source_params.device)
-            source_params.data.copy_(dest_data)
+    for rw_layer_name, rw_params in rw_layers.items():
+        temp_name = copy.deepcopy(rw_layer_name) # base_model.model.model.layers.21.self_attn.v_proj.lora_B.default.weight
+        rw_name_remove_base = temp_name.replace("base_model.model.", "")
 
-    for name, param in model_source.named_parameters():
-        if 'score' in name:  #  'score' is the name of the last layer
+        if rw_name_remove_base in gen_layers and rw_params.shape == gen_layers[rw_name_remove_base].shape:
+            # Ensure both tensors are on the same device
+            dest_data = gen_layers[rw_name_remove_base].data.to(rw_params.device)
+            rw_params.data.copy_(dest_data)
+
+    for name, param in rw_model.named_parameters():
+        if 'modules_to_save' in name:  #  'score' is the name of the last layer
             param.requires_grad = True
         else:
             param.requires_grad = False
@@ -677,7 +675,6 @@ if __name__ == '__main__':
                 tokenizer = tokenizer,
                 train_dataset = train_dataset_rw,
                 eval_dataset = eval_dataset_rw,
-                peft_config = peft_config_rw,
                 script_args = script_args
             )
 
