@@ -291,9 +291,11 @@ def get_rw_model_with_peft_config(
             param.requires_grad = True
 
     
-    rw_model.add_adapter(peft_config_rw, adapter_name)
-    # rw_model.enable_adapters()
-    rw_model.set_adapter(adapter_name)
+    # rw_model.add_adapter(peft_config_rw, adapter_name)
+    # # rw_model.enable_adapters()
+    # rw_model.set_adapter(adapter_name)
+            
+    rw_model = get_peft_model(rw_model, peft_config_rw)
 
     return rw_model
 
@@ -733,8 +735,6 @@ if __name__ == '__main__':
                         return_tensors="pt"
                     )
                     with torch.no_grad():
-                        pipe = pipeline("text-classification", model=rw_model, tokenizer=tokenizer)
-                        print(pipe(sample['chosen']))
                         rw_value_correct_ans = rw_model(**tokenized_sample_correct_ans).logits.mean(-1).sum() #SequenceClassifierOutputWithPast(logits=tensor([[-0.2898]], dtype=torch.float16), past_key_values=None, hidden_states=None, attentions=None)
                         rw_value_incorrect_ans = rw_model(**tokenized_sample_incorrect_ans).logits.mean(-1).sum()
                     rw_values_dict[question_id] = [rw_value_correct_ans.item(), rw_value_incorrect_ans.item()]
