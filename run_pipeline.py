@@ -558,10 +558,10 @@ if __name__ == '__main__':
     train_dataset = Dataset.from_dict(train_dataset)
 
     if script_args.sanity_check:
-        dataset_endidx = script_args.init_samples + 100
+        dataset_endidx = script_args.init_samples
     else:
         dataset_endidx = None
-    unobserved_dataset = copy.deepcopy(full_dataset[script_args.init_samples:dataset_endidx])
+    unobserved_dataset = copy.deepcopy(full_dataset[:dataset_endidx])
     unobserved_dataset = Dataset.from_dict(unobserved_dataset)
 
     del full_dataset
