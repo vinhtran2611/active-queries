@@ -450,7 +450,7 @@ def run_reward_training(
     script_args
 ):
     output_dir = os.path.join(script_args.output_dir, "reward_model")
-    stats_file_path = os.path.join(output_dir, "training_stats.json")
+    stats_file_path = os.path.join(output_dir, "reward_training_stats.json")
     
     training_args = RewardConfig(
         output_dir=output_dir,
@@ -499,7 +499,7 @@ def run_dpo_finetuning(
     script_args,
 ):
     output_dir = os.path.join(script_args.output_dir, "generator_model")
-    stats_file_path = os.path.join(output_dir, "training_stats.json")
+    stats_file_path = os.path.join(output_dir, "dpo_training_stats.json")
     
     training_args = TrainingArguments(
         per_device_train_batch_size=script_args.per_device_train_batch_size,
@@ -618,8 +618,7 @@ if __name__ == '__main__':
         script_args = script_args
     )
 
-    # del model
-    # del model_ref
+    del model
         
     # SAVING TOKENIZER
     tokenizer.save_pretrained(os.path.join(script_args.output_dir, "generator_model"))
@@ -791,7 +790,8 @@ if __name__ == '__main__':
             )
         else:
             raise NotImplementedError
-            
+        
+        del rw_model            
         ################################################################
         # FINE_TUNING LLM (GENERATOR)
         ################################################################
