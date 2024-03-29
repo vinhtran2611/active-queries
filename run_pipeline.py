@@ -214,22 +214,20 @@ def get_generator_with_adapter(
     device_map,
     script_args,
 ):
-    model = AutoModelForCausalLM.from_pretrained(
-        script_args.model_name_or_path,
+    peft_model = AutoModelForCausalLM.from_pretrained(
+        peft_adapter_path,
         low_cpu_mem_usage=True,
         quantization_config=quantization_config,
         device_map=device_map,
         trust_remote_code=script_args.trust_remote_code
     )
-    model.config.use_cache = False
-    model.config.pretraining_tp = 1
-    model.config.pad_token_id = model.config.eos_token_id
-    model.enable_input_require_grads()
+    peft_model.config.use_cache = False
+    peft_model.config.pretraining_tp = 1
+    peft_model.config.pad_token_id = peft_model.config.eos_token_id
+    peft_model.enable_input_require_grads()
 
-    lora_config = PeftConfig.from_pretrained(peft_adapter_path)
-    model = get_peft_model(model, lora_config)
 
-    return model
+    return peft_model
 
 ######################################################
 ################## REWARD MODEL ######################
@@ -495,13 +493,10 @@ def run_reward_training(
 
 def run_dpo_finetuning(
     model, 
-    model_ref, 
     tokenizer,
     train_dataset,
     eval_dataset,
-    peft_config,
     script_args,
-    is_merged = True
 ):
     output_dir = os.path.join(script_args.output_dir, "generator_model")
     stats_file_path = os.path.join(output_dir, "training_stats.json")
@@ -527,25 +522,16 @@ def run_dpo_finetuning(
         run_name="dpo_llama2",
         report_to=script_args.report_to
     )
-    
-    if peft_config:
-        # ValueError: You passed both a ref_model and a peft_config. 
-        # For training PEFT adapters with DPO there is no need to pass a reference model. 
-        # Please pass `ref_model=None` in case you want to train PEFT adapters, or pass a ref_model with `force_use_ref_model=True` in DPOTrainer's init. if you want to use a different ref_model.
-        model_ref = None
-    
-    # model = get_peft_model(model, peft_config)
-    # model.config.use_cache = False
         
+
     dpo_trainer = DPOTrainer(
         model,
-        model_ref, # None if peft_config
+        None, # None if peft_config
         args=training_args,
         beta=script_args.beta,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         tokenizer=tokenizer,
-        peft_config=None if is_merged else peft_config,
         max_prompt_length=script_args.max_prompt_length,
         max_length=script_args.max_seq_length
     )
@@ -628,11 +614,9 @@ if __name__ == '__main__':
 
     run_dpo_finetuning(
         model = model,
-        model_ref = model_ref,
         tokenizer = tokenizer,
         train_dataset = train_dataset_lm,
         eval_dataset = eval_dataset_lm,
-        peft_config = peft_config,
         script_args = script_args
     )
 
@@ -666,7 +650,7 @@ if __name__ == '__main__':
                 peft_config_rw
             )
             # COPY BACKBONE
-            # copy_backbone(rw_model, model)
+            copy_backbone(rw_model, model)
             
             train_dataset_rw, eval_dataset_rw = get_dataset_for_reward(
                 train_dataset=train_dataset,
@@ -695,7 +679,7 @@ if __name__ == '__main__':
             )
 
             # COPY BACKBONE
-            # copy_backbone(rw_model, model)
+            copy_backbone(rw_model, model)
             
             run_reward_training(
                 model = rw_model,
@@ -835,13 +819,10 @@ if __name__ == '__main__':
 
         run_dpo_finetuning(
             model = model,
-            model_ref = model_ref,
             tokenizer = tokenizer,
             train_dataset = train_dataset_lm,
             eval_dataset = eval_dataset_lm,
-            peft_config = peft_config,
             script_args = script_args,
-            is_merged = True,
         )
         
         ################################################################
