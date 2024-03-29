@@ -212,10 +212,10 @@ def get_generator_with_adapter(
     peft_adapter_path,
     quantization_config,
     device_map,
-    script_args
+    script_args,
 ):
     model = AutoModelForCausalLM.from_pretrained(
-        peft_adapter_path,
+        script_args.model_name_or_path,
         low_cpu_mem_usage=True,
         quantization_config=quantization_config,
         device_map=device_map,
@@ -225,6 +225,9 @@ def get_generator_with_adapter(
     model.config.pretraining_tp = 1
     model.config.pad_token_id = model.config.eos_token_id
     model.enable_input_require_grads()
+
+    lora_config = PeftConfig.from_pretrained(peft_adapter_path)
+    model = get_peft_model(model, lora_config)
 
     return model
 
@@ -821,12 +824,11 @@ if __name__ == '__main__':
             sanity_check=script_args.sanity_check
         )
 
-        model = get_generator_with_adapter(
-            # script_args.model_name_or_path,
+        model = get_generator_with_adapter(  
             os.path.join(script_args.output_dir, "generator_model"),
             quantization_config,
             device_map,
-            script_args
+            script_args, 
         )
 
         model_ref = copy.deepcopy(model) if peft_config else None
