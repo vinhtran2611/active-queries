@@ -130,6 +130,7 @@ elif script_args.load_in_8bit or script_args.load_in_4bit:
         bnb_4bit_compute_dtype=torch.bfloat16,
         bnb_4bit_use_double_quant=False,
     )
+
     # Copy the model to each device
     device_map = {"": Accelerator().local_process_index}
 else:
@@ -197,11 +198,11 @@ def get_generator(
     model.config.pretraining_tp = 1
     model.config.pad_token_id = model.config.eos_token_id
 
-    # if script_args.ignore_bias_buffers:
-    #     # torch distributed hack
-    #     model._ddp_params_and_buffers_to_ignore = [
-    #         name for name, buffer in model.named_buffers() if buffer.dtype == torch.bool
-    #     ]
+    if script_args.ignore_bias_buffers:
+        # torch distributed hack
+        model._ddp_params_and_buffers_to_ignore = [
+            name for name, buffer in model.named_buffers() if buffer.dtype == torch.bool
+        ]
 
     # modify
     model.add_adapter(peft_config)
@@ -449,8 +450,16 @@ def run_reward_training(
     eval_dataset,
     script_args
 ):
-    output_dir = os.path.join(script_args.output_dir, "reward_model")
+    model_name = script_args.model_name_or_path.split("/")[-1]
+    output_dir = os.path.join(script_args.output_dir, model_name, "reward_model")
     stats_file_path = os.path.join(output_dir, "reward_training_stats.json")
+
+    # Check if output_dir exists, if not create it
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        print(f"Created directory: {output_dir}")
+    else:
+        print(f"The directory {output_dir} already exists.")
     
     training_args = RewardConfig(
         output_dir=output_dir,
@@ -498,8 +507,16 @@ def run_dpo_finetuning(
     eval_dataset,
     script_args,
 ):
-    output_dir = os.path.join(script_args.output_dir, "generator_model")
+    model_name = script_args.model_name_or_path.split("/")[-1]
+    output_dir = os.path.join(script_args.output_dir, model_name, "generator_model")
     stats_file_path = os.path.join(output_dir, "dpo_training_stats.json")
+
+    # Check if output_dir exists, if not create it
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        print(f"Created directory: {output_dir}")
+    else:
+        print(f"The directory {output_dir} already exists.")
     
     training_args = TrainingArguments(
         per_device_train_batch_size=script_args.per_device_train_batch_size,
