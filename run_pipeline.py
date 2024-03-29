@@ -449,6 +449,7 @@ def run_reward_training(
     script_args
 ):
     output_dir = os.path.join(script_args.output_dir, "reward_model")
+    stats_file_path = os.path.join(output_dir, "training_stats.json")
     
     training_args = RewardConfig(
         output_dir=output_dir,
@@ -475,8 +476,19 @@ def run_reward_training(
         eval_dataset=eval_dataset,
     )
     
-    rw_trainer.train()
+    stats = rw_trainer.train()
     rw_trainer.model.save_pretrained(output_dir)
+
+    # Save or append training statistics to a JSON file
+    if os.path.exists(stats_file_path):
+        with open(stats_file_path, 'r') as stats_file:
+            existing_stats = json.load(stats_file)
+        existing_stats.append(stats)
+        with open(stats_file_path, 'w') as stats_file:
+            json.dump(existing_stats, stats_file, indent=4)
+    else:
+        with open(stats_file_path, 'w') as stats_file:
+            json.dump([stats], stats_file, indent=4)
 
 def run_dpo_finetuning(
     model, 
@@ -489,6 +501,7 @@ def run_dpo_finetuning(
     is_merged = True
 ):
     output_dir = os.path.join(script_args.output_dir, "generator_model")
+    stats_file_path = os.path.join(output_dir, "training_stats.json")
     
     training_args = TrainingArguments(
         per_device_train_batch_size=script_args.per_device_train_batch_size,
@@ -534,8 +547,19 @@ def run_dpo_finetuning(
         max_length=script_args.max_seq_length
     )
     
-    dpo_trainer.train()
+    stats = dpo_trainer.train()
     dpo_trainer.model.save_pretrained(output_dir)
+
+    # Save or append training statistics to a JSON file
+    if os.path.exists(stats_file_path):
+        with open(stats_file_path, 'r') as stats_file:
+            existing_stats = json.load(stats_file)
+        existing_stats.append(stats)
+        with open(stats_file_path, 'w') as stats_file:
+            json.dump(existing_stats, stats_file, indent=4)
+    else:
+        with open(stats_file_path, 'w') as stats_file:
+            json.dump([stats], stats_file, indent=4)
 
 if __name__ == '__main__':
     # LOAD DATASETS
@@ -817,8 +841,6 @@ if __name__ == '__main__':
             script_args = script_args,
             is_merged = True,
         )
-        
-        
         
         ################################################################
         # EVALUATING LLM (GENERATOR)
