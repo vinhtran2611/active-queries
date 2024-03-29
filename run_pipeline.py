@@ -506,6 +506,7 @@ def run_dpo_finetuning(
     train_dataset,
     eval_dataset,
     script_args,
+    max_steps = None
 ):
     model_name = script_args.model_name_or_path.split("/")[-1]
     output_dir = os.path.join(script_args.output_dir, model_name, "generator_model")
@@ -522,7 +523,7 @@ def run_dpo_finetuning(
         per_device_train_batch_size=script_args.per_device_train_batch_size,
         per_device_eval_batch_size=script_args.per_device_eval_batch_size,
         num_train_epochs=script_args.num_train_epochs,
-        # max_steps=script_args.max_steps,
+        max_steps=max_steps if max_steps else None,
         # logging_steps=script_args.logging_steps,
         # save_steps=script_args.save_steps,
         # gradient_accumulation_steps=script_args.gradient_accumulation_steps,
@@ -632,7 +633,8 @@ if __name__ == '__main__':
         tokenizer = tokenizer,
         train_dataset = train_dataset_lm,
         eval_dataset = eval_dataset_lm,
-        script_args = script_args
+        script_args = script_args,
+        max_steps = 200
     )
 
     del model
