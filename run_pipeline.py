@@ -457,9 +457,9 @@ def run_reward_training(
         max_length=script_args.max_seq_length,
         per_device_train_batch_size=script_args.per_device_train_batch_size,
         num_train_epochs=script_args.num_train_epochs,
-        # max_steps=script_args.max_steps,
-        gradient_accumulation_steps=script_args.gradient_accumulation_steps,
-        gradient_checkpointing=script_args.gradient_checkpointing,
+        # # max_steps=script_args.max_steps,
+        # gradient_accumulation_steps=script_args.gradient_accumulation_steps,
+        # gradient_checkpointing=script_args.gradient_checkpointing,
         learning_rate=script_args.learning_rate,
         report_to=script_args.report_to,
         remove_unused_columns=False,
@@ -508,8 +508,8 @@ def run_dpo_finetuning(
         # max_steps=script_args.max_steps,
         # logging_steps=script_args.logging_steps,
         # save_steps=script_args.save_steps,
-        gradient_accumulation_steps=script_args.gradient_accumulation_steps,
-        gradient_checkpointing=script_args.gradient_checkpointing,
+        # gradient_accumulation_steps=script_args.gradient_accumulation_steps,
+        # gradient_checkpointing=script_args.gradient_checkpointing,
         learning_rate=script_args.learning_rate,
         evaluation_strategy="epoch",
         # eval_steps=script_args.eval_steps,
@@ -610,8 +610,6 @@ if __name__ == '__main__':
         peft_config
     )
 
-    model_ref = copy.deepcopy(model) if peft_config else None
-
     run_dpo_finetuning(
         model = model,
         tokenizer = tokenizer,
@@ -690,7 +688,6 @@ if __name__ == '__main__':
             )
 
         del model
-        del model_ref
 
         if script_args.algo == "max_rw":
             ################################################################
@@ -814,8 +811,6 @@ if __name__ == '__main__':
             device_map,
             script_args, 
         )
-
-        model_ref = copy.deepcopy(model) if peft_config else None
 
         run_dpo_finetuning(
             model = model,
