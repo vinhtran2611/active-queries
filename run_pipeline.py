@@ -197,11 +197,11 @@ def get_generator(
     model.config.pretraining_tp = 1
     model.config.pad_token_id = model.config.eos_token_id
 
-    if script_args.ignore_bias_buffers:
-        # torch distributed hack
-        model._ddp_params_and_buffers_to_ignore = [
-            name for name, buffer in model.named_buffers() if buffer.dtype == torch.bool
-        ]
+    # if script_args.ignore_bias_buffers:
+    #     # torch distributed hack
+    #     model._ddp_params_and_buffers_to_ignore = [
+    #         name for name, buffer in model.named_buffers() if buffer.dtype == torch.bool
+    #     ]
 
     # modify
     model.add_adapter(peft_config)
@@ -464,7 +464,7 @@ def run_reward_training(
         report_to=script_args.report_to,
         remove_unused_columns=False,
         optim="adamw_torch",
-        logging_steps=script_args.logging_steps,
+        # logging_steps=script_args.logging_steps,
         # evaluation_strategy="steps" if script_args.eval_split != "none" else "no",
         # eval_steps=None if script_args.eval_split == "none" else 30000,
     )
@@ -506,16 +506,16 @@ def run_dpo_finetuning(
         per_device_eval_batch_size=script_args.per_device_eval_batch_size,
         num_train_epochs=script_args.num_train_epochs,
         # max_steps=script_args.max_steps,
-        logging_steps=script_args.logging_steps,
+        # logging_steps=script_args.logging_steps,
         # save_steps=script_args.save_steps,
         gradient_accumulation_steps=script_args.gradient_accumulation_steps,
         gradient_checkpointing=script_args.gradient_checkpointing,
         learning_rate=script_args.learning_rate,
-        evaluation_strategy="steps",
-        eval_steps=script_args.eval_steps,
+        evaluation_strategy="epoch",
+        # eval_steps=script_args.eval_steps,
         output_dir=output_dir,
         lr_scheduler_type=script_args.lr_scheduler_type,
-        warmup_steps=script_args.warmup_steps,
+        # warmup_steps=script_args.warmup_steps,
         optim=script_args.optimizer_type,
         bf16=False,
         remove_unused_columns=False,
