@@ -636,8 +636,6 @@ if __name__ == '__main__':
         script_args = script_args,
         max_steps = 200
     )
-
-    del model
         
     # SAVING TOKENIZER
     tokenizer.save_pretrained(os.path.join(script_args.output_dir, "generator_model"))
